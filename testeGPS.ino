@@ -2,7 +2,6 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
-
 //Pinos utilizados para conexao do modulo GY-NEO6MV2
 static const int RXPin = 2, TXPin = 3;
 
@@ -20,7 +19,7 @@ uint8_t coords[6]; // 6*8 bits = 48
 void setup()
 {
   //Baud rate Arduino
-  Serial.begin(115200);
+  Serial.begin(9600);
   //Baud rate Modulo GPS
   Serial_GPS.begin(9600);
 
@@ -46,37 +45,40 @@ void loop()
 void displayInfo()
 {
   //Mostra informacoes no Serial Monitor
-  Serial.print(F("L:"));
+  //Serial.print(F("L:"));
   if (gps.location.isValid())
   {
     float_latitude = gps.location.lat();
-    Serial.print(gps.location.lat(), 6); //latitude
-    Serial.print(F(","));
+    //Serial.print(gps.location.lat(), 6); //latitude
+    //Serial.print(F(","));
     float_longitude = gps.location.lng();
-    Serial.print(gps.location.lng(), 6); //longitude
-    Serial.print(F(" "));
+    //Serial.print(gps.location.lng(), 6); //longitude
+    //Serial.print(F(" "));
+    Codcat();
   }
   else
   {
     Serial.print(F("INVALID "));
   }
   
-  Codcat();
-  Serial.println();
-  Decodcat();
-  Serial.println();
+  
+  delay(200);
+  //Decodcat();
+  //Serial.println();
 }
 
+
+/*FUNCAO DE CODIFICACAO DE COORDENADAS*/
 void Codcat(){
   int ordemlong = 1000;
   int ordemlat = 1000;
   if(float_latitude >= 10 || float_latitude <= -10){
     ordemlat = 100;
   }
-  if(float_longitude >=10 || float_longitude <= -10 ){
+  if(float_longitude >= 10 || float_longitude <= -10 ){
     ordemlong = 100;
   }
-  Serial.println(ordemlong);
+  //Serial.println(ordemlong);
   lat = float_latitude*ordemlat;
   lon = float_longitude*ordemlong;
   
@@ -89,11 +91,16 @@ void Codcat(){
   coords[4] = lon >> 8;
   coords[5] = lon >> 16;
 
+  
+  Serial.print('a');  
   for(int i = 0; i <= 5; i++)
     Serial.print(coords[i]);
+  Serial.print('z');  
+  
   //LMIC_setTxData2(1, coords, sizeof(coords), 0);
 }
 
+/*FUNCAO DE DECODIFICACAO DE COORDENADAS*/
 void Decodcat(){
   //Serial.println(coords[0]); 
   //Serial.println(coords[1]); 
@@ -107,10 +114,10 @@ void Decodcat(){
   
   int32_t lond = (coords[3]+(coords[4] << 8)+(coords[5] << 16)); 
   
-  Serial.println(); 
-  Serial.print(latd);
-  Serial.print(F(","));
-  Serial.print(lond);
+  //Serial.println(); 
+  //Serial.print(latd);
+  //Serial.print(F(","));
+  //Serial.print(lond);
 }
 
 
