@@ -15,7 +15,8 @@ float float_latitude, float_longitude;
 int32_t lat;
 int32_t lon;
 uint8_t coords[6]; // 6*8 bits = 48
-  
+int point = 1;
+
 void setup()
 {
   //Baud rate Arduino
@@ -38,7 +39,9 @@ void loop()
     Serial.println(F("No GPS detected: check wiring."));
     while (true);
   }
-
+  if(point)
+    Serial.print('.');
+    
   delay(1000);
 }
 
@@ -59,25 +62,31 @@ void displayInfo()
   else
   {
     Serial.print(F("INVALID "));
+    
   }
   
+  point = 0;
   
-  delay(200);
-  //Decodcat();
+  //Decodcat(); //Para testar a codificacao
   //Serial.println();
 }
 
 
-/*FUNCAO DE CODIFICACAO DE COORDENADAS*/
+/***************************FUNCAO DE CODIFICACAO DE COORDENADAS******************************
+* float_latitude, float_latitude => Latitude e Longitude originais, recebidas pelo GPS       *
+*                                                                                            *
+* Funcionamento da Codificação:                                                              *
+* 1) Multiplica o numero float por 100, para que seja salvo as casas decimais                *
+* 2) Colocará a nova parte inteira no vetor coords[0-2] (Latitude) e coords[3-5] (Longitude) *
+* 3) Após isso, será enviado o número codificado via serial, o qual o inicio do envio está   *
+*    indicado com o char 'a' e o fim com o char 'z'.                                         *
+*                                                                                            *
+*********************************************************************************************/
+
 void Codcat(){
-  int ordemlong = 1000;
-  int ordemlat = 1000;
-  if(float_latitude >= 10 || float_latitude <= -10){
-    ordemlat = 100;
-  }
-  if(float_longitude >= 10 || float_longitude <= -10 ){
-    ordemlong = 100;
-  }
+  int ordemlong = 100;
+  int ordemlat = 100;
+  
   //Serial.println(ordemlong);
   lat = float_latitude*ordemlat;
   lon = float_longitude*ordemlong;
@@ -97,7 +106,6 @@ void Codcat(){
     Serial.print(coords[i]);
   Serial.print('z');  
   
-  //LMIC_setTxData2(1, coords, sizeof(coords), 0);
 }
 
 /*FUNCAO DE DECODIFICACAO DE COORDENADAS*/
