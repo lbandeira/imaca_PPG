@@ -1,4 +1,18 @@
-    #baixar biblioteca bitstring
+  start = "s"
+  #start = start.decode('utf-8')
+  print(start)
+
+  if(start == "s"):
+    print("comecou medicao")
+    photo = random.randint(0, 15)
+    peso = random.randint(0, 255)
+    temp = round(random.uniform(0, 63 ), 2) 
+    ecg  = round(random.uniform(0, 5), 2) 
+    bpm  = random.randint(40, 110)
+    ox   = random.randint(0, 100) 
+    sis = random.randint(0, 31)
+    dia = random.randint(0, 31)
+    
     f = open("packet.txt", "wb")
     pesoBit = BitArray(uint=int(peso), length = 8)
 
