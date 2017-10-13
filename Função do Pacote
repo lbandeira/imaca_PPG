@@ -1,116 +1,97 @@
-import time
-import serial
-import pyrebase
-import random
+#!/usr/bin/env python
+"""
+Module-level unit tests.
+"""
+
+import unittest
 import sys
-from datetime import datetime
-from time import sleep
-from bitstring import BitArray
-
-config = {
-    "apiKey": "AIzaSyB8mMEws9sB8822nrgtAzge9fvFiKr4Pms",
-    "authDomain": "imacasbesc.firebaseapp.com",
-    "databaseURL": "https://imacasbesc.firebaseio.com",
-    "projectId": "imacasbesc",
-    "storageBucket": "imacasbesc.appspot.com",
-    "messagingSenderId": "947414408697"
-  };
-firebase = pyrebase.initialize_app(config)
- 
-db = firebase.database()
-iMacaDB = "Médico Regulador/Atendimento/ID Maca"
-ctrPhoto= False
-f = open("packet.txt", "wb")
-
-while 1:
-
-  start = "s"
-  #start = start.decode('utf-8')
-  print(start)
-
-  if(start == "s"):
-    print("comecou medicao")
-    photo = random.randint(0, 15)
-    peso = random.randint(0, 255)
-    temp = round(random.uniform(0, 63 ), 2) 
-    ecg  = round(random.uniform(0, 5), 2) 
-    bpm  = random.randint(40, 110)
-    ox   = random.randint(0, 100) 
-    sis = random.randint(0, 31)
-    dia = random.randint(0, 31)
-
-    
-    pesoBit = BitArray(uint=int(peso), length = 8)
-
-    bpmBit = BitArray(uint=int(bpm), length=7)
-    oxBit = BitArray(uint=int(ox), length = 7)
-  
-    sisBit = BitArray(uint=int(sis), length = 5)
-    diaBit = BitArray(uint=int(dia), length = 5)
-    photoBit = BitArray(uint=int(photo), length=4)
-    fill = BitArray (uint=0, length = 60)
-
-    payload = pesoBit + bpmBit + oxBit + sisBit + diaBit + photoBit + fill
-
-    print (str(pesoBit.bin) + "|" + str(bpmBit.bin) + "|" + str(oxBit.bin) + "|" + str(sisBit.bin) + "|" + str(diaBit.bin) + "|" + str(photoBit.bin) + "|" + str(fill.bin))
-
-    
-    print(payload.bin)
-    print("\n========\n")
-    payload.tofile(f)
-    sys.stdout.flush()
+sys.path.insert(0, '..')
+import bitstring
+import copy
 
 
-    if(ctrPhoto == False):
+class ModuleData(unittest.TestCase):
+    def testVersion(self):
+        self.assertEqual(bitstring.__version__, '3.1.5')
 
-      photo = int(photo)
-      if(photo == 1):
-        cx = cy = 11
+    def testAll(self):
+        exported = ['ConstBitArray', 'ConstBitStream', 'BitStream', 'BitArray',
+                    'Bits', 'BitString', 'pack', 'Error', 'ReadError',
+                    'InterpretError', 'ByteAlignError', 'CreationError', 'bytealigned']
+        self.assertEqual(set(bitstring.__all__), set(exported))
 
-        #f.write("cx: " + str(cx) + "\n")
-        #f.write("cy: " +  str(cy) + "\n")
-        #f.flush()
-        ctrPhoto = True
-    
-    try:
-      peso = float(peso)
-      #db.child(iMacaDB).update({"Peso": peso})
-      #f.write("peso: %.2f \n" %peso)
-      #f.flush()
-    except ValueError :
-      print("waiting for peso... ValueError: %s" %peso)
-         
-    try:
-      temp = float(temp)
-      #db.child(iMacaDB).update({"Temperatura": temp})
-      #f.write("temp: %.2f \n" %temp)
-      #f.flush()
-    except:
-      print("waiting for temp... ValueError: %s" %temp)
+    def testReverseDict(self):
+        d = bitstring.BYTE_REVERSAL_DICT
+        for i in range(256):
+            a = bitstring.Bits(uint=i, length=8)
+            b = d[i]
+            self.assertEqual(a.bin[::-1], bitstring.Bits(bytes=b).bin)
 
-    try:
-      ecg = float(ecg)
-      #db.child(iMacaDB).update({"ecg": ecg})
-      #f.write("ecg: %.2f\n" %ecg)
-      #f.flush()
-    except:
-      print("waiting for ecg... ValueError: %s" %ecg)
-      
-    try:
-      bpm = int(bpm)
-      #db.child(iMacaDB).update({"BPM": bpm})
-      #f.write("bpm: %d \n" %bpm)
-      #f.flush()
-    except:
-      print("waiting for bpm... ValueError: %s" %bpm)
-     
-    try:
-      ox = float(ox)
-      #db.child(iMacaDB).update({"Spo2": ox})
-      #f.write("spo2: %.2f \n" %ox)
-      #f.flush()
-    except:
-      print("waiting for spo2... ValueError: %s" %ox)
-    #f.write("\n==================\n")
-    #f.flush()
-    time.sleep(0.8)
+    def testAliases(self):
+        self.assertTrue(bitstring.Bits is bitstring.ConstBitArray)
+        self.assertTrue(bitstring.BitStream is bitstring.BitString)
+
+
+class MemoryUsage(unittest.TestCase):
+    def testBaselineMemory(self):
+        try:
+            import pympler.asizeof.asizeof as size
+        except ImportError:
+            return
+        # These values might be platform dependent, so don't fret too much.
+        self.assertEqual(size(bitstring.ConstBitStream([0])), 64)
+        self.assertEqual(size(bitstring.Bits([0])), 64)
+        self.assertEqual(size(bitstring.BitStream([0])), 64)
+        self.assertEqual(size(bitstring.BitArray([0])), 64)
+        from bitstring.bitstore import ByteStore
+        self.assertEqual(size(ByteStore(bytearray())), 100)
+
+
+class Copy(unittest.TestCase):
+    def testConstBitArrayCopy(self):
+        import copy
+        cba = bitstring.Bits(100)
+        cba_copy = copy.copy(cba)
+        self.assertTrue(cba is cba_copy)
+
+    def testBitArrayCopy(self):
+        ba = bitstring.BitArray(100)
+        ba_copy = copy.copy(ba)
+        self.assertFalse(ba is ba_copy)
+        self.assertFalse(ba._datastore is ba_copy._datastore)
+        self.assertTrue(ba == ba_copy)
+
+    def testConstBitStreamCopy(self):
+        cbs = bitstring.ConstBitStream(100)
+        cbs.pos = 50
+        cbs_copy = copy.copy(cbs)
+        self.assertEqual(cbs_copy.pos, 0)
+        self.assertTrue(cbs._datastore is cbs_copy._datastore)
+        self.assertTrue(cbs == cbs_copy)
+
+    def testBitStreamCopy(self):
+        bs = bitstring.BitStream(100)
+        bs.pos = 50
+        bs_copy = copy.copy(bs)
+        self.assertEqual(bs_copy.pos, 0)
+        self.assertFalse(bs._datastore is bs_copy._datastore)
+        self.assertTrue(bs == bs_copy)
+
+
+class Interning(unittest.TestCase):
+    def testBits(self):
+        a = bitstring.Bits('0xf')
+        b = bitstring.Bits('0xf')
+        self.assertTrue(a is b)
+        c = bitstring.Bits('0b1111')
+        self.assertFalse(a is c)
+
+    def testCBS(self):
+        a = bitstring.ConstBitStream('0b11000')
+        b = bitstring.ConstBitStream('0b11000')
+        self.assertFalse(a is b)
+    #        self.assertTrue(a._datastore is b._datastore)
+        
+        
+        
+        
