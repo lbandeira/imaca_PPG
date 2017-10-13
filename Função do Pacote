@@ -1,0 +1,20 @@
+    #baixar biblioteca bitstring
+    f = open("packet.txt", "wb")
+    pesoBit = BitArray(uint=int(peso), length = 8)
+
+    bpmBit = BitArray(uint=int(bpm), length=7)
+    oxBit = BitArray(uint=int(ox), length = 7)
+  
+    sisBit = BitArray(uint=int(sis), length = 5)
+    diaBit = BitArray(uint=int(dia), length = 5)
+    photoBit = BitArray(uint=int(photo), length=4)
+    fill = BitArray (uint=0, length = 60)
+
+    payload = pesoBit + bpmBit + oxBit + sisBit + diaBit + photoBit + fill
+
+    print (str(pesoBit.bin) + "|" + str(bpmBit.bin) + "|" + str(oxBit.bin) + "|" + str(sisBit.bin) + "|" + str(diaBit.bin) + "|" + str(photoBit.bin) + "|" + str(fill.bin))
+
+    print(payload.bin)
+    print("\n========\n")
+    payload.tofile(f)
+    sys.stdout.flush()
