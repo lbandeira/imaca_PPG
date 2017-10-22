@@ -39,7 +39,7 @@
 
 HX711 scale(A5, A4);
 
-int cont = 0;
+int cont = 0, eStop = 12;
 float calibration_factor = 17310; 
 // the setup routine runs once when you press reset:
 
@@ -49,6 +49,7 @@ void setup() {
   eHealth.initPulsioximeter();
     scale.set_scale();
   scale.tare(); //Reset the scale to 0
+  pinMode(12, INPUT);
 
 
   //Attach the inttruptions for using the pulsioximeter.   
@@ -61,22 +62,29 @@ void loop() {
 
     scale.set_scale(calibration_factor); //Adjust to this calibration factor
 
-  float temperature = eHealth.getTemperature();
-  Serial.println(temperature, 4);  
+  if(digitalRead(eStop) == HIGH)
+  {
+    Serial.println('s')
+    Serial.println(1)
+  
+    float temperature = eHealth.getTemperature();
+    Serial.println(temperature, 4);  
 
   
-  float ECG = eHealth.getECG();
-  Serial.println(ECG, 2); 
-  // o oximetro demora de 4 a 6 segundos para estabilizar
-  //Serial.print("PRbpm : "); 
-  Serial.println(eHealth.getBPM());
+    float ECG = eHealth.getECG();
+    Serial.println(ECG, 2); 
+    
+    // o oximetro demora de 4 a 6 segundos para estabilizar
+    //Serial.print("PRbpm : "); 
+    Serial.println(eHealth.getBPM());
 
-  //Serial.print("%SPo2 : ");
-  Serial.println(eHealth.getOxygenSaturation());
-  // 1 a 2 segundos para imprimir o peso 
-  Serial.println(scale.get_units(), 1); 
+    //Serial.print("%SPo2 : ");
+    Serial.println(eHealth.getOxygenSaturation());
+  
+    // 1 a 2 segundos para imprimir o peso 
+    Serial.println(scale.get_units(), 1); 
 
-  delay(500);
+    delay(800);
 }
 
 
