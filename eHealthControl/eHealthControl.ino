@@ -1,3 +1,7 @@
+#include <eHealth.h>
+#include <eHealthDisplay.h>
+
+
 /*
  *  eHealth sensor platform for Arduino and Raspberry from Cooking-hacks.
  *
@@ -31,7 +35,6 @@
  *  Author: Luis Martin & Ahmad Saad
  */
 
-#include <eHealth.h>
 #include <PinChangeInt.h>
 #include <Time.h>
 #include <TimeLib.h>
@@ -39,7 +42,9 @@
 
 HX711 scale(A5, A4);
 
-int cont = 0;
+int cont = 0, eStop = 12;
+int air, readAir = 0, airCount = 0;
+
 float calibration_factor = 17310; 
 // the setup routine runs once when you press reset:
 
@@ -49,6 +54,7 @@ void setup() {
   eHealth.initPulsioximeter();
     scale.set_scale();
   scale.tare(); //Reset the scale to 0
+  pinMode(12, INPUT);
 
 
   //Attach the inttruptions for using the pulsioximeter.   
@@ -61,22 +67,61 @@ void loop() {
 
     scale.set_scale(calibration_factor); //Adjust to this calibration factor
 
-  float temperature = eHealth.getTemperature();
-  Serial.println(temperature, 4);  
-
+  if(digitalRead(eStop) == HIGH)
+  {
+    if(readAir == 0)
+    {
+      Serial.println('s');
+    
+      float temperature = eHealth.getTemperature();
+      Serial.println(temperature, 4);  
   
-  float ECG = eHealth.getECG();
-  Serial.println(ECG, 2); 
-  // o oximetro demora de 4 a 6 segundos para estabilizar
-  //Serial.print("PRbpm : "); 
-  Serial.println(eHealth.getBPM());
+    
+      float ECG = eHealth.getECG();
+      Serial.println(ECG, 2); 
+      
+      // o oximetro demora de 4 a 6 segundos para estabilizar
+      //Serial.print("PRbpm : "); 
+      Serial.println(eHealth.getBPM());
+  
+      //Serial.print("%SPo2 : ");
+      Serial.println(eHealth.getOxygenSaturation());
+    
+      // 1 a 2 segundos para imprimir o peso 
+      Serial.println(12); 
+      delay(500);
 
-  //Serial.print("%SPo2 : ");
-  Serial.println(eHealth.getOxygenSaturation());
-  // 1 a 2 segundos para imprimir o peso 
-  Serial.println(scale.get_units(), 1); 
+    }
+    
+  if(readAir == 0)
+  {
+    Serial.println('a');
+    readAir = 1; 
 
-  delay(500);
+  }
+
+if(readAir && airCount < 50)
+{ air = eHealth.getAirFlow();  
+  Serial.println(air);
+  //eHealth.airFlowWave(air);  
+  airCount++;
+  
+}
+else if(airCount == 50)
+{
+  airCount = 0;
+}
+if(airCount == 0)
+{
+  Serial.println('r');
+  readAir = 0;
+}
+  
+}
+else
+{
+    Serial.println("eStop Button LOW");
+}
 }
 
 
@@ -84,7 +129,7 @@ void loop() {
 //=========================================================================
 void readPulsioximeter(){  
 
-  cont ++;
+  cont++;
 
   if (cont == 50) { //Get only of one 50 measures to reduce the latency
     eHealth.readPulsioximeter();  
@@ -93,4 +138,4 @@ void readPulsioximeter(){
 }
 
 
-
+  
