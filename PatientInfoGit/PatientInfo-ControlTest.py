@@ -8,18 +8,23 @@ from kivy.clock import Clock
 from kivy.uix.textinput import TextInput
 from kivy.uix.slider import Slider
 from kivy.core.window import Window
+from kivy.config import Config
 
 import random
+import math
 import time
 import pyrebase
 import sys
 from datetime import datetime
 from time import sleep
 
-debug = 1
-gcs = temp = ecg = ox = bpm = sis = dia = air = 0
-ser = serial.Serial('COM3', 115200, timeout=0)
+Alerts = ["Low breathing rate, please measure the blood pressure and the GCS"]
 
+debug = 1
+
+gcs = temp = ecg = ox = bpm = sis = dia = air = rts = 0
+#ser = serial.Serial('COM3', 115200, timeout=0)
+Window.size = (1366, 768)
 Window.clearcolor = (0.92, 0.94, 0.96, 1)
 
 fontName = r"C:\Users\Julia\Documents\HPx360\Documents\iMaca\Site\Fontes\Rise\FiraSans-ExtraBold.otf"
@@ -51,60 +56,69 @@ def RTS(GCS, SBP, RR):
 
 class PatientInfoApp(App):
  
+
 	def build(self):
+		global gcs
 		Layout = StackLayout(padding =  [10, 10, 10, 10], spacing = [15, 10])
 
 
-		self.Press=Button(font_name = fontName, text='Blood\nPressure:', font_size=36, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\redBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\redBtn.jpg", size_hint= [.3, .2])
+		self.Press=Button(font_name = fontName, text='Blood\nPressure:', font_size=32, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.2, .2])
 		Layout.add_widget(self.Press)
 
-		self.Temp=Button(font_name = fontName, text='Temp:', font_size=36, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\yelBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\yelBtn.jpg", size_hint= [.3, .2])
+		self.Temp=Button(font_name = fontName, text='Temp:', font_size=32, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.2, .2])
 		Layout.add_widget(self.Temp)
 		
-		self.Air=Button(font_name = fontName, text='Resp:', font_size=36, size_hint_x = None, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\greBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\greBtn.jpg", size_hint= [.3, .2])
+		self.Air=Button(font_name = fontName, text='Resp:', font_size=32, size_hint_x = None, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.2, .2])
 		Layout.add_widget(self.Air)	
 
-		self.Ox=Button(font_name = fontName, text='Spo2:', font_size=36, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.3, .2])
+		self.Ox=Button(font_name = fontName, text='Spo2:', font_size=32, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.2, .2])
 		Layout.add_widget(self.Ox)
 
-		self.ECG=Button(font_name = fontName, text='ECG:', font_size=36, background_color= [1, 0, 0, 1], size_hint= [.3, .2])
+		self.ECG=Button(font_name = fontName, text='ECG:', font_size=32, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.2, .2])
 		Layout.add_widget(self.ECG)
 
-		self.BPM=Button(font_name = fontName, text='BPM:', font_size=36, background_color= [0, .6, 0, 1], size_hint= [.3, .2])
+		self.BPM=Button(font_name = fontName, text='BPM:', font_size=32, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.2, .2])
 		Layout.add_widget(self.BPM)
 
-		self.RTS=Button(font_name = fontName, text='Temp:', font_size=36, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\yelBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\yelBtn.jpg", size_hint= [.3, .2])
+		self.RTS=Button(font_name = fontName, text='RTS:', font_size=32, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\greBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.2, .2])
 		Layout.add_widget(self.RTS)
+
+		self.Alert=Button(font_name = fontName, text='', font_size=32, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\bluBtn.jpg", size_hint= [.6, .2])
+		Layout.add_widget(self.Alert)
 
 		GCSmsg = "Digite o valor do GCS"
 		self.GCSbox = TextInput(hint_text=GCSmsg, multiline=False, size_hint_y=None, height=30, size_hint_x=None, width = 313)
 		Layout.add_widget(self.GCSbox)
 
+		self.Logo=Button(text='', font_size=32, background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Logo.png", background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Logo.png", size_hint= [.6, .7])
+		Layout.add_widget(self.Logo)		
 
-		def on_text(instance, value):
-			print('Typing GCS')
-						
-		def on_enter(instance):
-			gcs = self.GCSbox.text
-			print("GCS: " + str(gcs) )		
-
-		self.GCSbox.bind(text=on_text, on_text_validate=on_enter)
 
 		Clock.schedule_interval(self.update, 30 / 60.0)
 		return Layout
 
-	def update(self, dt):
-		global sis, air
 
-		start = ser.readline().strip()
-		start = start.decode('utf-8')
+	def update(self, dt):
+		global sis, air, gcs, rts
+
+		if(self.GCSbox.text.isdigit()):
+
+			gcs = self.GCSbox.text
+			rts = RTS(int(gcs), int(sis), int(air))
+			rts = math.floor(rts)
+			self.RTS.text = "RTS: " + str(rts)
+			rts = float(rts)
+
+		start = 'b'
+		#start = start.decode('utf-8')
 		if(start == 'b'):
 			print("begin")
 
-			temp = ser.readline().strip()
-			ecg  = ser.readline().strip()
-			ox   = ser.readline().strip()
-			bpm  = ser.readline().strip()
+			temp = round(random.uniform(35,  37), 2)
+			ecg  = round(random.uniform(0, 5), 2)
+			ox   = random.randint(80, 100) 
+			bpm  = random.randint(40, 110)
+			start = 'a'
 
 			if(debug):
 
@@ -116,14 +130,14 @@ class PatientInfoApp(App):
 			try:  
 				temp = float(temp)
 				temp = str(temp)
-				self.Temp.text = temp[:-2] + "°C"
+				self.Temp.text = "Temperatura:\n" + temp[:-2] + "°C"
 			except:
 				self.Temp.text = self.Temp.text
 			
 			try:
 				ecg = float(ecg)
 				ecg = str(ecg)
-				self.ECG.text = ecg
+				self.ECG.text = "ECG:\n" + ecg
 			except:
 				self.ECG.text = self.ECG.text
 
@@ -142,39 +156,61 @@ class PatientInfoApp(App):
 				self.BPM.text = self.BPM.text
 		if(start == 'a'):
 
-			air = ser.readline().strip()
+			air = random.randint(0, 30)
+			start = 's'
 			print(air)
 			try:
 				air = int(air)
 				air = str(air)
-				self.Air.text = air + "\nbreaths/min"
+				self.Air.text = air + "\nrespirações/min"
 			except:
 				self.Air.text = self.Air.text
 		
 		if(start == 's'):
 			
-			sis = ser.readline().strip()
+			sis = 90
+			start = 'd'
 			print(sis)
 			try:
 				sis = int(sis)
 				sis = str(sis)
-				self.Press.text = sis + '/' + str(dia)
+				self.Press.text = "Pressão:\n" + sis + '/' + str(dia)
 			except:
 				self.Press.text = self.Press.text
 
 		if(start == 'd'):
 			
-			dia = ser.readline().strip()
+			dia = 60
+			while(dia > int(sis)):
+				dia = random.randint(60, 120)
+			start = 'b'
 			print(dia)
 			try:
 				dia = int(dia)
 				dia = str(dia)
-				self.Press.text = str(sis) + '/' + dia
+				self.Press.text = "Pressão:\n" + str(sis) + '/' + dia
 			except:
 				self.Press.text = self.Press.text
+		else:
 
-			
+			self.Alert.text = "Measuring\nbreathing\nrate"
 
+		if(int(air) <= 9):
+			self.Alert.background_normal = background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\redBtn.jpg"
+			self.Alert.text	= "Taxa de Respiração Baixa\nMedir a pressão"
+		elif(int(air) > 9 and int(air) < 29):
+			self.Alert.background_normal = background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\greBtn.jpg"
+			self.Alert.text = "Taxa de Respiração Normal"
+		else:
+			self.Alert.background_normal = background_down = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\redBtn.jpg"
+			self.Alert.text = "Taxa de Respiração Alta\rMedir a pressão"
 
-#Window.fullscreen = True	
+		if(rts <= 4):
+			self.RTS.background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\redBtn.jpg"
+		elif(rts > 4 and rts < 6):
+		 	self.RTS.background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\yelBtn.jpg"
+		else:
+		 	self.RTS.background_normal = r"C:\Users\Julia\Desktop\PatientInfoMod\PatientInfoGit\Buttons\greBtn.jpg"
+
+Window.fullscreen = True	
 PatientInfoApp().run()
