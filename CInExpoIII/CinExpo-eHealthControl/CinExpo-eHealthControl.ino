@@ -36,16 +36,13 @@ void setup() {
 }
 
 void getBloodPressure() {
-  unsigned char sis, dis, pul;
-  Serial.println("blood pressure");
+  char buffy[15], ch;
+
+  // send data only when you receive data:
   while (bpSerial.available() > 0) {
     ch = bpSerial.read();
     if (ch == 0x0A)
     {
-      sis = ((buffy[2] - '0') * 100) + ((buffy[3] - '0') * 10) + (buffy[4] - '0');
-      dis = ((buffy[7] - '0') * 100) + ((buffy[8] - '0') * 10) + (buffy[9] - '0');
-      pul = ((buffy[12] - '0') * 100) + ((buffy[13] - '0') * 10) + (buffy[14] - '0');
-
       Serial.println('s');
       Serial.println(sis);
 
@@ -57,7 +54,19 @@ void getBloodPressure() {
     else
     {
       buffy[i] = ch;
-      i++;
+      Serial.print("i: "); Serial.print(i); Serial.print(" fetched: ");
+      Serial.println(buffy[i]);
+      
+      if(i == 2 || i == 3 || i == 4)
+      {        
+        sis = sis * 10 + (buffy[i] - '0');
+      }
+      
+      if(i == 7 || i == 8 || i == 9)
+      {
+        dis = dis * 10 + (buffy[i] - '0');
+      }
+       i++;
     }
   }
   return;
