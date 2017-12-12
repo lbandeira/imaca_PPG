@@ -241,7 +241,8 @@ class PatientInfoScreen(FloatLayout):
                                     dia = int(dia)
                                     dia = str(dia)
                                     Press.text = "Pressão:\n" + str(sis) + '/' + dia
-                                    db.child(iMacaDB).update({"Diastolica": dia})                                    
+                                    press = str(sis) + '-' + dia
+                                    db.child(iMacaDB).update({"Diastolica": press})                                    
                                     
                             except:
                                     Press.text = Press.text
@@ -258,6 +259,11 @@ class PatientInfoScreen(FloatLayout):
                                     
                     rts = RTS(gcs, sis, air)
                     RTSBox.text = "RTS: " + str(rts)
+                    frts = str(rts)
+                    frts = frts[0:4]
+                    RTSBox.text = "RTS: " + frts
+
+                    db.child(iMacaDB).update({"RTS": frts})
                                         
                     # This part here changes the RTS box color according to the value, red -> urgent, yellow -> not good, green -> good
                     
